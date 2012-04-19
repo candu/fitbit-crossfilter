@@ -83,5 +83,13 @@ class Fitbit(object):
         print
 
         self._consumer = consumer
+        self._unauth_token = token
         self._token = oauth2.Token(access_token['oauth_token'],
                                    access_token['oauth_token_secret'])
+        self._client = oauth2.Client(self._consumer, self._unauth_token)
+
+    def request(self, url):
+        #params['oauth_token'] = self._token.key
+        #params['oauth_consumer_key'] = self._consumer.key
+        full_url = 'http://{0}{1}'.format(API_HOST, url)
+        return self._client.request(full_url, 'GET')
