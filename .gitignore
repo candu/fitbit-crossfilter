@@ -1,2 +1,4 @@
 *.swp
 *.pyc
+fitbit_crossfilter/settings.py
+.fitbit_access_token
