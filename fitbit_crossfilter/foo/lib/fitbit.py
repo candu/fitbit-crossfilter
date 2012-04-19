@@ -3,6 +3,7 @@ import oauth2
 import json
 import webbrowser
 import urlparse
+import httplib
 from django.conf import settings
 
 AUTH_HOST = 'www.fitbit.com'
@@ -83,13 +84,27 @@ class Fitbit(object):
         print
 
         self._consumer = consumer
-        self._unauth_token = token
-        self._token = oauth2.Token(access_token['oauth_token'],
-                                   access_token['oauth_token_secret'])
-        self._client = oauth2.Client(self._consumer, self._unauth_token)
+        self._token = token
+        self._access_token = oauth2.Token(access_token['oauth_token'],
+                                          access_token['oauth_token_secret'])
+        #self._client = oauth2.Client(self._consumer, self._token)
+        #self._client.set_signature_method(oauth2.SignatureMethod_PLAINTEXT())
+        self._signature_method = oauth2.SignatureMethod_PLAINTEXT()
 
     def request(self, url):
-        #params['oauth_token'] = self._token.key
-        #params['oauth_consumer_key'] = self._consumer.key
         full_url = 'http://{0}{1}'.format(API_HOST, url)
-        return self._client.request(full_url, 'GET')
+        #return self._client.request(full_url, 'GET')
+        oauth_request = oauth2.Request.from_consumer_and_token(
+                self._consumer,
+                token=self._access_token,
+                http_url=full_url)
+        oauth_request.sign_request(
+                self._signature_method,
+                self._consumer,
+                self._access_token)
+        headers = oauth_request.to_header(realm='api.fitbit.com')
+        connection = httplib.HTTPSConnection(API_HOST)
+        connection.request('GET', full_url, headers=headers)
+        resp = connection.getresponse()
+        data = resp.read()
+        return data

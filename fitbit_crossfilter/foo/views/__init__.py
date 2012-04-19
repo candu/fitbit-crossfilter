@@ -8,8 +8,7 @@ from foo.lib.fitbit import Fitbit
 def index(request):
     fitbit = Fitbit()
     url = '/1/user/-/activities/steps/date/today/7d.json'
-    resp = fitbit.request(url)
-    print resp
+    data = fitbit.request(url)
     page = \
-    <ui:list items={[resp]} />
+    <ui:list items={[data]} />
     return HttpResponse(page)
