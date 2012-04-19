@@ -3,7 +3,7 @@ import oauth2
 import json
 import webbrowser
 import urlparse
-from ...settings import *
+from django.conf import settings
 
 AUTH_HOST = 'www.fitbit.com'
 API_HOST = 'api.fitbit.com'
@@ -24,7 +24,7 @@ AUTH_FAILURE_HTML = """
 fitbit login failed! oh no!
 """
 
-class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
         global OAUTH_DATA
         self.send_response(200)
@@ -40,48 +40,48 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             open(OAUTH_DATA_FILE, 'w').write(json.dumps(OAUTH_DATA))
             self.wfile.write(AUTH_SUCCESS_HTML)
 
-def main():
-    global OAUTH_DATA
+class Fitbit(object):
+    def __init__(self,
+                 consumer_key = settings.FITBIT_CONSUMER_KEY,
+                 consumer_secret = settings.FITBIT_CONSUMER_SECRET):
+        consumer = oauth2.Consumer(key=consumer_key,
+                                         secret=consumer_secret)
+        client = oauth2.Client(consumer)
 
-    consumer_key = FITBIT_CONSUMER_KEY
-    consumer_secret = FITBIT_CONSUMER_SECRET
+        # Get request token
+        resp, content = client.request(REQUEST_TOKEN_URL, 'GET')
+        status = resp['status']
+        if status != '200':
+            raise Exception('HTTP {error_code}'.format(error_code=status))
+        request_token = dict(urlparse.parse_qsl(content))
+        token = oauth2.Token(key=request_token['oauth_token'],
+                             secret=request_token['oauth_token_secret'])
 
-    consumer = oauth2.Consumer(key=consumer_key, secret=consumer_secret)
-    client = oauth2.Client(consumer)
+        print "Request Token:"
+        print "    - oauth_token        = %s" % token.key
+        print "    - oauth_token_secret = %s" % token.secret
+        print
 
-    # Get request token
-    resp, content = client.request(REQUEST_TOKEN_URL, 'GET')
-    status = resp['status']
-    if status != '200':
-        raise Exception('HTTP {error_code}'.format(error_code=status))
-    request_token = dict(urlparse.parse_qsl(content))
-    token = oauth2.Token(key=request_token['oauth_token'],
-                         secret=request_token['oauth_token_secret'])
+        # Ask user to authenticate this token
+        webbrowser.open('{0}?oauth_token={1}'.format(AUTH_URL, token.key))
+        httpd = BaseHTTPServer.HTTPServer(('127.0.0.1', SERVER_PORT),
+                                          _RequestHandler)
+        while OAUTH_DATA is None:
+            httpd.handle_request()
 
-    # Ask user to authenticate this token
-    print "Request Token:"
-    print "    - oauth_token        = %s" % token.key
-    print "    - oauth_token_secret = %s" % token.secret
-    print
+        # Request access token approved by user
+        token.set_verifier(OAUTH_DATA['oauth_verifier'])
+        client = oauth2.Client(consumer, token)
+        resp, content = client.request(ACCESS_TOKEN_URL, 'POST')
+        access_token = dict(urlparse.parse_qsl(content))
 
-    webbrowser.open('{0}?oauth_token={1}'.format(AUTH_URL, token.key))
-    httpd = BaseHTTPServer.HTTPServer(('127.0.0.1', SERVER_PORT),
-                                      RequestHandler)
-    while OAUTH_DATA is None:
-        httpd.handle_request()
+        print "Access Token:"
+        print "    - oauth_token        = %s" % access_token['oauth_token']
+        print "    - oauth_token_secret = %s" % access_token['oauth_token_secret']
+        print
+        print "You may now access protected resources using the access tokens above."
+        print
 
-    # Request access token approved by user
-    token.set_verifier(OAUTH_DATA['oauth_verifier'])
-    client = oauth2.Client(consumer, token)
-    resp, content = client.request(ACCESS_TOKEN_URL, 'POST')
-    access_token = dict(urlparse.parse_qsl(content))
-
-    print "Access Token:"
-    print "    - oauth_token        = %s" % access_token['oauth_token']
-    print "    - oauth_token_secret = %s" % access_token['oauth_token_secret']
-    print
-    print "You may now access protected resources using the access tokens above."
-    print
-
-if __name__ == '__main__':
-    main()
+        self._consumer = consumer
+        self._token = oauth2.Token(access_token['oauth_token'],
+                                   access_token['oauth_token_secret'])
