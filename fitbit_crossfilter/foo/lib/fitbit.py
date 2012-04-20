@@ -54,14 +54,8 @@ class Fitbit(object):
         status = resp['status']
         if status != '200':
             raise Exception('HTTP {error_code}'.format(error_code=status))
-        request_token = dict(urlparse.parse_qsl(content))
-        token = oauth2.Token(key=request_token['oauth_token'],
-                             secret=request_token['oauth_token_secret'])
-
-        print "Request Token:"
-        print "    - oauth_token        = %s" % token.key
-        print "    - oauth_token_secret = %s" % token.secret
-        print
+        token = oauth2.Token.from_string(content)
+        print 'Request Token: {0}'.format(token)
 
         # Ask user to authenticate this token
         webbrowser.open('{0}?oauth_token={1}'.format(AUTH_URL, token.key))
@@ -74,26 +68,16 @@ class Fitbit(object):
         token.set_verifier(OAUTH_DATA['oauth_verifier'])
         client = oauth2.Client(consumer, token)
         resp, content = client.request(ACCESS_TOKEN_URL, 'POST')
-        access_token = dict(urlparse.parse_qsl(content))
-
-        print "Access Token:"
-        print "    - oauth_token        = %s" % access_token['oauth_token']
-        print "    - oauth_token_secret = %s" % access_token['oauth_token_secret']
-        print
-        print "You may now access protected resources using the access tokens above."
-        print
+        access_token = oauth2.Token.from_string(content)
+        print 'Access Token: {0}'.format(access_token)
 
         self._consumer = consumer
         self._token = token
-        self._access_token = oauth2.Token(access_token['oauth_token'],
-                                          access_token['oauth_token_secret'])
-        #self._client = oauth2.Client(self._consumer, self._token)
-        #self._client.set_signature_method(oauth2.SignatureMethod_PLAINTEXT())
+        self._access_token = access_token
         self._signature_method = oauth2.SignatureMethod_PLAINTEXT()
 
     def request(self, url):
         full_url = 'http://{0}{1}'.format(API_HOST, url)
-        #return self._client.request(full_url, 'GET')
         oauth_request = oauth2.Request.from_consumer_and_token(
                 self._consumer,
                 token=self._access_token,
@@ -102,7 +86,7 @@ class Fitbit(object):
                 self._signature_method,
                 self._consumer,
                 self._access_token)
-        headers = oauth_request.to_header(realm='api.fitbit.com')
+        headers = oauth_request.to_header(realm=API_HOST)
         connection = httplib.HTTPSConnection(API_HOST)
         connection.request('GET', full_url, headers=headers)
         resp = connection.getresponse()
