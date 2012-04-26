@@ -2,17 +2,15 @@ from xhpy.pylib import *
 
 import json
 import oauth2
-import urllib
 import urlparse
 
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import redirect
 
+from foo.models import UserData
 from foo.ui.page import :ui:page
 from foo.lib.fitbit import Fitbit
-
-# TODO: put these in settings
 
 def index(request):
     if request.session.get('access_token') is None:
@@ -27,22 +25,33 @@ def index(request):
     </ui:page>
     return HttpResponse(page)
 
+"""
+def get_user_data(request):
+    if request.session.get('access_token') is None:
+        return redirect('/login')
+    if user_has_no_data():
+        time_series = fetch_time_series_max()
+        start_date = time_series[0]
+    else:
+        start_date = first_day_where_user_has_no_data()
+    end_date = today()
+    if start_date == end_date:
+        # TODO: return some success status
+        return HttpResponse(json.dumps({'status': 'ok'}),
+                        content_type='application/json')
+    fetch_time_series(start_date, end_date)
+    for date in range(start_date, end_date):
+        fetch_intraday_data(date)
+    return HttpResponse(json.dumps({'status': 'ok'}),
+                        content_type='application/json')
+"""
+
 def login(request):
     if request.session.get('access_token') is not None:
         return redirect('/')
-    client = oauth2.Client(Fitbit.CONSUMER)
-    resp, content = client.request(Fitbit.REQUEST_TOKEN_URL, 'GET')
-    status = resp['status']
-    if status != '200':
-        raise Exception('HTTP {error_code}'.format(error_code=status))
-    token = oauth2.Token.from_string(content)
+    token = Fitbit.get_token()
     request.session['token'] = token.to_string()
-    print 'Request Token: {0}'.format(token)
-    params = {
-        'oauth_token': token.key,
-    }
-    url = '{0}?{1}'.format(Fitbit.AUTH_URL, urllib.urlencode(params))
-    return redirect(url)
+    return redirect(Fitbit.get_auth_url(token))
 
 def logout(request):
     if request.session.get('access_token') is not None:
@@ -53,20 +62,11 @@ def logout(request):
 def oauth(request):
     if request.session.get('token') is None:
         return redirect('/')
-    oauth_token = request.GET.get('oauth_token')
-    if oauth_token is None:
-        raise Exception('no oauth_token in callback request params!')
+    oauth_verifier = request.GET.get('oauth_verifier')
+    if oauth_verifier is None:
+        raise Exception('no oauth_verifier in callback request params!')
     token = oauth2.Token.from_string(request.session['token'])
-    token.set_verifier(request.GET['oauth_verifier'])
-
-    client = oauth2.Client(Fitbit.CONSUMER, token)
-    resp, content = client.request(Fitbit.ACCESS_TOKEN_URL, 'POST')
-    status = resp['status']
-    if status != '200':
-        raise Exception('HTTP {error_code}'.format(error_code=status))
-    print 'Access Token: {0}'.format(content)
-    request.session['access_token'] = content
-    # TODO: actually get userid via API here
-    # url = 'whatever'
-    # fitbit = Fitbit.request(url)
+    access_token = Fitbit.get_access_token(token, oauth_verifier)
+    request.session['access_token'] = access_token.to_string()
+    request.session['user_id'] = Fitbit.get_current_user_id(access_token)
     return redirect('/')

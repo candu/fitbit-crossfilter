@@ -1,10 +1,9 @@
 import httplib
+import json
 import oauth2
+import urllib
 
 from django.conf import settings
-
-# TODO: put in settings
-API_HOST = 'api.fitbit.com'
 
 class Fitbit(object):
     AUTH_HOST = 'www.fitbit.com'
@@ -20,9 +19,41 @@ class Fitbit(object):
                                secret=settings.FITBIT_CONSUMER_SECRET)
 
     @classmethod
+    def get_token(cls):
+        client = oauth2.Client(cls.CONSUMER)
+        resp, content = client.request(cls.REQUEST_TOKEN_URL, 'GET')
+        status = resp['status']
+        if status != '200':
+            raise Exception('HTTP {error_code}'.format(error_code=status))
+        print 'Request Token: {0}'.format(content)
+        return oauth2.Token.from_string(content)
+
+    @classmethod
+    def get_auth_url(cls, token):
+        params = {'oauth_token': token.key}
+        return '{0}?{1}'.format(cls.AUTH_URL, urllib.urlencode(params))
+
+    @classmethod
+    def get_access_token(cls, token, oauth_verifier):
+        token.set_verifier(oauth_verifier)
+        client = oauth2.Client(cls.CONSUMER, token)
+        resp, content = client.request(cls.ACCESS_TOKEN_URL, 'POST')
+        status = resp['status']
+        if status != '200':
+            raise Exception('HTTP {error_code}'.format(error_code=status))
+        print 'Access Token: {0}'.format(content)
+        return oauth2.Token.from_string(content)
+
+    @classmethod
+    def get_current_user_id(cls, access_token):
+        url = '/1/user/-/profile.json'
+        data = json.loads(cls.request(access_token, url))
+        return data['user']['encodedId']
+
+    @classmethod
     def request(cls, access_token, url):
         consumer = cls.CONSUMER
-        full_url = 'http://{0}{1}'.format(API_HOST, url)
+        full_url = 'http://{0}{1}'.format(cls.API_HOST, url)
         oauth_request = oauth2.Request.from_consumer_and_token(
                 cls.CONSUMER,
                 token=access_token,
@@ -31,9 +62,9 @@ class Fitbit(object):
                 cls.SIGNATURE_METHOD,
                 cls.CONSUMER,
                 access_token)
-        headers = oauth_request.to_header(realm=API_HOST)
+        headers = oauth_request.to_header(realm=cls.API_HOST)
         # TODO: handle HTTP errors here...
-        connection = httplib.HTTPSConnection(API_HOST)
+        connection = httplib.HTTPSConnection(cls.API_HOST)
         connection.request('GET', full_url, headers=headers)
         resp = connection.getresponse()
         data = resp.read()
