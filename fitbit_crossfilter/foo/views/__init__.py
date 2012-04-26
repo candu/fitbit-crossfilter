@@ -1,5 +1,6 @@
 from xhpy.pylib import *
 
+import datetime
 import json
 import oauth2
 import urlparse
@@ -15,20 +16,20 @@ from foo.lib.fitbit import Fitbit
 def index(request):
     if request.session.get('access_token') is None:
         return redirect('/login')
-    # url = '/1/user/-/activities/steps/date/today/7d.json'
     url = '/1/user/-/activities/log/steps/date/2012-04-22/1d.json'
     access_token = oauth2.Token.from_string(request.session['access_token'])
-    data = json.loads(Fitbit.request(access_token, url))
+    data = Fitbit.get_user_data_by_date(
+            access_token, datetime.date(year=2012, month=4, day=22))
     page = \
     <ui:page>
         {json.dumps(data)}
     </ui:page>
     return HttpResponse(page)
 
-"""
 def get_user_data(request):
     if request.session.get('access_token') is None:
         return redirect('/login')
+    """
     if user_has_no_data():
         time_series = fetch_time_series_max()
         start_date = time_series[0]
@@ -42,9 +43,9 @@ def get_user_data(request):
     fetch_time_series(start_date, end_date)
     for date in range(start_date, end_date):
         fetch_intraday_data(date)
+    """
     return HttpResponse(json.dumps({'status': 'ok'}),
                         content_type='application/json')
-"""
 
 def login(request):
     if request.session.get('access_token') is not None:

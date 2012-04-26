@@ -1,3 +1,4 @@
+import datetime
 import httplib
 import json
 import oauth2
@@ -51,6 +52,47 @@ class Fitbit(object):
         return data['user']['encodedId']
 
     @classmethod
+    def get_user_data_by_date(cls, access_token, date):
+        date = date.strftime('%Y-%m-%d')
+        user_data = {}
+        # activities intraday and summary data
+        intraday_log_types = [
+            'calories',
+            'steps',
+            'floors',
+            'elevation',
+        ]
+        for log_type in intraday_log_types:
+            url = '/1/user/-/activities/log/{0}/date/{1}/1d.json'.format(
+                    log_type, date)
+            user_data[log_type] = json.loads(cls.request(access_token, url))
+        # other activity summary data
+        daily_log_types = [
+            'minutesSedentary',
+            'minutesLightlyActive',
+            'minutesFairlyActive',
+            'minutesVeryActive',
+            'activeScore',
+        ]
+        for log_type in daily_log_types:
+            url = '/1/user/-/activities/{0}/date/{1}/1d.json'.format(
+                    log_type, date)
+            user_data[log_type] = json.loads(cls.request(access_token, url))
+        # sleep summary data
+        sleep_log_types = [
+            'startTime',
+            'timeInBed',
+            'awakeningsCount',
+            'minutesToFallAsleep',
+            'efficiency',
+        ]
+        for log_type in sleep_log_types:
+            url = '/1/user/-/sleep/{0}/date/{1}/1d.json'.format(
+                    log_type, date)
+            user_data[log_type] = json.loads(cls.request(access_token, url))
+        return user_data
+
+    @classmethod
     def request(cls, access_token, url):
         consumer = cls.CONSUMER
         full_url = 'http://{0}{1}'.format(cls.API_HOST, url)
@@ -63,9 +105,11 @@ class Fitbit(object):
                 cls.CONSUMER,
                 access_token)
         headers = oauth_request.to_header(realm=cls.API_HOST)
-        # TODO: handle HTTP errors here...
         connection = httplib.HTTPSConnection(cls.API_HOST)
         connection.request('GET', full_url, headers=headers)
         resp = connection.getresponse()
+        status = str(resp.status)
+        if str(status) != '200':
+            raise Exception('HTTP {error_code}'.format(error_code=status))
         data = resp.read()
         return data
