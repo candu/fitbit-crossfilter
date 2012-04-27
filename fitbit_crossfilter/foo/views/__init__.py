@@ -16,11 +16,9 @@ from foo.lib.fitbit import Fitbit
 def index(request):
     if request.session.get('access_token') is None:
         return redirect('/login')
-    url = '/1/user/-/activities/log/steps/date/2012-04-22/1d.json'
     access_token = oauth2.Token.from_string(request.session['access_token'])
     page = \
     <ui:page>
-        {json.dumps(data)}
     </ui:page>
     return HttpResponse(page)
 
@@ -31,7 +29,7 @@ def get_user_data(request):
     user_id = request.session['user_id']
     one_month_ago = datetime.date.today() - datetime.timedelta(days=30)
     query = UserData.objects.filter(user_id=user_id, date__gte=one_month_ago)
-    data = list(row.data for row in query)
+    data = list(json.loads(row.data) for row in query)
     return HttpResponse(json.dumps(data),
                         content_type='application/json')
 
@@ -47,13 +45,13 @@ def sync_user_data(request):
     else:
         next_date = Fitbit.get_user_joined_date(access_token)
         next_date = datetime.datetime.strptime(next_date, '%Y-%m-%d').date()
-    end_date = datetime.date.today()
+    end_date = Fitbit.get_user_last_sync_date(access_token)
     while next_date < end_date:
         print 'loading date {0}'.format(next_date)
         data = Fitbit.get_user_data_by_date(access_token, next_date)
         user_data = UserData(user_id=user_id,
                              date=next_date,
-                             data=data)
+                             data=json.dumps(data))
         user_data.save()
         next_date += datetime.timedelta(days=1)
     return HttpResponse(json.dumps({'status': 'ok'}),

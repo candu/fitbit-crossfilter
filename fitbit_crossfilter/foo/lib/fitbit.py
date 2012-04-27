@@ -58,6 +58,13 @@ class Fitbit(object):
         return data['user']['memberSince']
 
     @classmethod
+    def get_user_last_sync_date(cls, access_token):
+        url = '/1/user/-/devices.json'
+        data = json.loads(cls.request(access_token, url))
+        dt = data[0]['lastSyncTime']
+        return datetime.datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S.%f").date()
+
+    @classmethod
     def get_user_data_by_date(cls, access_token, date):
         date = date.strftime('%Y-%m-%d')
         user_data = {}

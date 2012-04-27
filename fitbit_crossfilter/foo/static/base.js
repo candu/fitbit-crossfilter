@@ -1,5 +1,55 @@
 d3.json("/get-user-data", function(json) {
- 
+  var timeSeries = json.map(function(dailyData) {
+    // time
+    var date = dailyData["activeScore"]["activities-activeScore"][0]["dateTime"];
+    var timestamp = +new Date(date + " 00:00:00");
+    // daily activity metrics
+    var activeScore = +dailyData["activeScore"]["activities-activeScore"][0]["value"];
+    var minutesSedentary = +dailyData["minutesSedentary"]["activities-minutesSedentary"][0]["value"];
+    var minutesLightlyActive = +dailyData["minutesLightlyActive"]["activities-minutesLightlyActive"][0]["value"];
+    var minutesFairlyActive = +dailyData["minutesFairlyActive"]["activities-minutesFairlyActive"][0]["value"];
+    var minutesVeryActive = +dailyData["minutesVeryActive"]["activities-minutesVeryActive"][0]["value"];
+    // daily sleep metrics
+    var awakeningsCount = +dailyData["awakeningsCount"]["sleep-awakeningsCount"][0]["value"];
+    var efficiency = +dailyData["efficiency"]["sleep-efficiency"][0]["value"];
+    var minutesToFallAsleep = +dailyData["minutesToFallAsleep"]["sleep-minutesToFallAsleep"][0]["value"];
+    var startTime = +dailyData["startTime"]["sleep-startTime"][0]["value"];
+    var timeInBed = +dailyData["timeInBed"]["sleep-timeInBed"][0]["value"];
+    // daily direct data 
+    var totalCalories = +dailyData["calories"]["activities-log-calories"][0]["value"];
+    var totalFloors = +dailyData["floors"]["activities-log-floors"][0]["value"];
+    var totalSteps = +dailyData["steps"]["activities-log-steps"][0]["value"];
+    var dailyTimeSeries = [];
+    for (var i = 0; i < 1440; i++) {
+      dailyTimeSeries.push({
+        // time
+        timestamp: timestamp,
+        // daily series
+        activeScore: activeScore,
+        minutesSedentary: minutesSedentary,
+        minutesLightlyActive: minutesLightlyActive,
+        minutesFairlyActive: minutesFairlyActive,
+        minutesVeryActive: minutesVeryActive,
+        awakeningsCount: awakeningsCount,
+        efficiency: efficiency,
+        minutesToFallAsleep: minutesToFallAsleep,
+        startTime: startTime,
+        timeInBed: timeInBed,
+        totalCalories: totalCalories,
+        totalFloors: totalFloors,
+        totalSteps: totalSteps,
+        // intraday series
+        calories: +dailyData["calories"]["activities-log-calories-intraday"]["dataset"][i]["value"],
+        floors: +dailyData["floors"]["activities-log-floors-intraday"]["dataset"][i]["value"],
+        steps: +dailyData["steps"]["activities-log-steps-intraday"]["dataset"][i]["value"],
+      });
+      timestamp += 60 * 1000;
+    }
+    return dailyTimeSeries;
+  });
+  timeSeries = [].concat.apply([], timeSeries);
+  window.timeSeries = timeSeries;
+  
   function barChart() {
     if (!barChart.id) barChart.id = 0;
 
