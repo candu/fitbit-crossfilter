@@ -31,10 +31,7 @@ def get_user_data(request):
     user_id = request.session['user_id']
     one_month_ago = datetime.date.today() - datetime.timedelta(days=30)
     query = UserData.objects.filter(user_id=user_id, date__gte=one_month_ago)
-    data = {}
-    for row in query:
-        date = row.date.strftime('%Y-%m-%d')
-        data[date] = row.data
+    data = list(row.data for row in query)
     return HttpResponse(json.dumps(data),
                         content_type='application/json')
 

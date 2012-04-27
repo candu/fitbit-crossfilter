@@ -12,7 +12,6 @@ class :ui:page(:x:element):
             <ui:css path="base.css" />
             <ui:js path="crossfilter.js" />
             <ui:js path="d3.js" />
-            <ui:js path="base.js" />
         </head>
         container = <div id="container" />
         for child in self.getChildren():
@@ -23,6 +22,7 @@ class :ui:page(:x:element):
                 {head}
                 <body>
                     {container}
+                    <ui:js path="base.js" />
                 </body>
             </html>
         </x:doctype>
