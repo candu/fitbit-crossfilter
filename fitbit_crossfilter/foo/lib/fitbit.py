@@ -52,6 +52,12 @@ class Fitbit(object):
         return data['user']['encodedId']
 
     @classmethod
+    def get_user_joined_date(cls, access_token):
+        url = '/1/user/-/profile.json'
+        data = json.loads(cls.request(access_token, url))
+        return data['user']['memberSince']
+
+    @classmethod
     def get_user_data_by_date(cls, access_token, date):
         date = date.strftime('%Y-%m-%d')
         user_data = {}

@@ -18,8 +18,6 @@ def index(request):
         return redirect('/login')
     url = '/1/user/-/activities/log/steps/date/2012-04-22/1d.json'
     access_token = oauth2.Token.from_string(request.session['access_token'])
-    data = Fitbit.get_user_data_by_date(
-            access_token, datetime.date(year=2012, month=4, day=22))
     page = \
     <ui:page>
         {json.dumps(data)}
@@ -29,21 +27,24 @@ def index(request):
 def get_user_data(request):
     if request.session.get('access_token') is None:
         return redirect('/login')
-    """
-    if user_has_no_data():
-        time_series = fetch_time_series_max()
-        start_date = time_series[0]
+    access_token = oauth2.Token.from_string(request.session['access_token'])
+    user_id = request.session['user_id']
+    dates = list(UserData.objects.filter(user_id=user_id).values('date'))
+    dates = sorted(map(lambda d: d['date'], dates))
+    if dates:
+        next_date = dates[-1] + datetime.timedelta(days=1)
     else:
-        start_date = first_day_where_user_has_no_data()
-    end_date = today()
-    if start_date == end_date:
-        # TODO: return some success status
-        return HttpResponse(json.dumps({'status': 'ok'}),
-                        content_type='application/json')
-    fetch_time_series(start_date, end_date)
-    for date in range(start_date, end_date):
-        fetch_intraday_data(date)
-    """
+        next_date = Fitbit.get_user_joined_date(access_token)
+        next_date = datetime.datetime.strptime(next_date, '%Y-%m-%d').date()
+    end_date = datetime.date.today()
+    while next_date < end_date:
+        print 'loading date {0}'.format(next_date)
+        data = Fitbit.get_user_data_by_date(access_token, next_date)
+        user_data = UserData(user_id=user_id,
+                             date=next_date,
+                             data=data)
+        user_data.save()
+        next_date += datetime.timedelta(days=1)
     return HttpResponse(json.dumps({'status': 'ok'}),
                         content_type='application/json')
 
