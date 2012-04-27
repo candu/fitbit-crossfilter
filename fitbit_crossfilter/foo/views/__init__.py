@@ -29,6 +29,20 @@ def get_user_data(request):
         return redirect('/login')
     access_token = oauth2.Token.from_string(request.session['access_token'])
     user_id = request.session['user_id']
+    one_month_ago = datetime.date.today() - datetime.timedelta(days=30)
+    query = UserData.objects.filter(user_id=user_id, date__gte=one_month_ago)
+    data = {}
+    for row in query:
+        date = row.date.strftime('%Y-%m-%d')
+        data[date] = row.data
+    return HttpResponse(json.dumps(data),
+                        content_type='application/json')
+
+def sync_user_data(request):
+    if request.session.get('access_token') is None:
+        return redirect('/login')
+    access_token = oauth2.Token.from_string(request.session['access_token'])
+    user_id = request.session['user_id']
     dates = list(UserData.objects.filter(user_id=user_id).values('date'))
     dates = sorted(map(lambda d: d['date'], dates))
     if dates:
