@@ -1,4 +1,5 @@
 d3.json("/get-user-data", function(json) {
+  // TODO: build time series in Python instead, store those in DB
   var timeSeries = json.map(function(dailyData) {
     // time
     var date = dailyData["activeScore"]["activities-activeScore"][0]["dateTime"];
@@ -48,8 +49,73 @@ d3.json("/get-user-data", function(json) {
     return dailyTimeSeries;
   });
   timeSeries = [].concat.apply([], timeSeries);
-  window.timeSeries = timeSeries;
-  
+
+  // crossfilter dimensions and groups
+  var fitbit = crossfilter(timeSeries);
+  var allGrp = fitbit.groupAll();
+  var dateDim = fitbit.dimension(function(d) {
+    return d3.time.day(new Date(d.timestamp));
+  });
+  var dateGrp = dateDim.group();
+  var hourDim = fitbit.dimension(function(d) {
+    var dDate = new Date(d.timestamp);
+    return dDate.getHours() + dDate.getMinutes() / 60;
+  });
+  var hourGrp = hourDim.group(Math.floor);
+
+  var today = new Date();
+  var endDate = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      0, 0, 0);
+  var startDate = new Date(+endDate - 90 * 24 * 60 * 60 * 1000);
+  console.log(endDate);
+  console.log(startDate);
+
+  var charts = [
+    barChart()
+        .dimension(dateDim)
+        .group(dateGrp)
+      .x(d3.time.scale()
+        .domain([startDate, endDate])
+        .rangeRound([0, 10 * 90])),
+    barChart()
+        .dimension(hourDim)
+        .group(hourGrp)
+      .x(d3.scale.linear()
+        .domain([0, 24])
+        .rangeRound([0, 10 * 24]))
+  ];
+
+  var chart = d3.selectAll(".chart")
+    .data(charts)
+    .each(function(chart) {
+      chart.on("brush", renderAll).on("brushend", renderAll);
+    });
+
+  renderAll();
+
+  function render(method) {
+    d3.select(this).call(method);
+  }
+
+  // Whenever the brush moves, re-rendering everything.
+  function renderAll() {
+    chart.each(render);
+  }
+
+  window.filter = function(filters) {
+    filters.forEach(function(d, i) { charts[i].filter(d); });
+    renderAll();
+  };
+
+  window.reset = function(i) {
+    charts[i].filter(null);
+    renderAll();
+  };
+
+  // from crossfilter demo at http://square.github.com/crossfilter/
   function barChart() {
     if (!barChart.id) barChart.id = 0;
 

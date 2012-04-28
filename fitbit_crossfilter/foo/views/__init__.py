@@ -19,6 +19,14 @@ def index(request):
     access_token = oauth2.Token.from_string(request.session['access_token'])
     page = \
     <ui:page>
+        <div id="body">
+            <div id="date-chart" class="chart">
+                <div class="title">Date</div>
+            </div>
+            <div id="hour-chart" class="chart">
+                <div class="title">Time of Day</div>
+            </div>
+        </div>
     </ui:page>
     return HttpResponse(page)
 
