@@ -1,18 +1,43 @@
 body {
-  font-family: "Helvetica Neue";
+  font-family: "Oxygen", "Helvetica Neue", sans-serif;
+  font-size: 14pt;
+  color: #222;
+  background-color: #f7f7f7;
   margin: 40px auto;
+  width: 960px;
 }
 
-#body {
+#container {
     position: relative;
 }
 
-#date-chart {
-    width: 920px;
+#banner {
+    color: #c33;
 }
 
-#hour-chart {
-    width: 260px;
+a {
+  padding: 0 4px;
+}
+
+#charts {
+  padding: 10px 0;
+}
+
+.chart > .title {
+  color: #444;
+  font-size: 90%;
+}
+
+#date-chart {
+  width: 920px;
+}
+
+#hour-chart, #timeinbed-chart {
+  width: 260px;
+}
+
+#steps-chart {
+  width: 430px;
 }
 
 .chart {

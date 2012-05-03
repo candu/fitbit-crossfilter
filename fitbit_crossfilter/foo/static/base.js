@@ -1,54 +1,23 @@
 d3.json("/get-user-data", function(json) {
-  // TODO: build time series in Python instead, store those in DB
   var timeSeries = json.map(function(dailyData) {
-    // time
-    var date = dailyData["activeScore"]["activities-activeScore"][0]["dateTime"];
-    var timestamp = +new Date(date + " 00:00:00");
-    // daily activity metrics
-    var activeScore = +dailyData["activeScore"]["activities-activeScore"][0]["value"];
-    var minutesSedentary = +dailyData["minutesSedentary"]["activities-minutesSedentary"][0]["value"];
-    var minutesLightlyActive = +dailyData["minutesLightlyActive"]["activities-minutesLightlyActive"][0]["value"];
-    var minutesFairlyActive = +dailyData["minutesFairlyActive"]["activities-minutesFairlyActive"][0]["value"];
-    var minutesVeryActive = +dailyData["minutesVeryActive"]["activities-minutesVeryActive"][0]["value"];
-    // daily sleep metrics
-    var awakeningsCount = +dailyData["awakeningsCount"]["sleep-awakeningsCount"][0]["value"];
-    var efficiency = +dailyData["efficiency"]["sleep-efficiency"][0]["value"];
-    var minutesToFallAsleep = +dailyData["minutesToFallAsleep"]["sleep-minutesToFallAsleep"][0]["value"];
-    var startTime = +dailyData["startTime"]["sleep-startTime"][0]["value"];
-    var timeInBed = +dailyData["timeInBed"]["sleep-timeInBed"][0]["value"];
-    // daily direct data 
-    var totalCalories = +dailyData["calories"]["activities-log-calories"][0]["value"];
-    var totalFloors = +dailyData["floors"]["activities-log-floors"][0]["value"];
-    var totalSteps = +dailyData["steps"]["activities-log-steps"][0]["value"];
-    var dailyTimeSeries = [];
-    for (var i = 0; i < 1440; i++) {
-      dailyTimeSeries.push({
-        // time
-        timestamp: timestamp,
-        // daily series
-        activeScore: activeScore,
-        minutesSedentary: minutesSedentary,
-        minutesLightlyActive: minutesLightlyActive,
-        minutesFairlyActive: minutesFairlyActive,
-        minutesVeryActive: minutesVeryActive,
-        awakeningsCount: awakeningsCount,
-        efficiency: efficiency,
-        minutesToFallAsleep: minutesToFallAsleep,
-        startTime: startTime,
-        timeInBed: timeInBed,
-        totalCalories: totalCalories,
-        totalFloors: totalFloors,
-        totalSteps: totalSteps,
-        // intraday series
-        calories: +dailyData["calories"]["activities-log-calories-intraday"]["dataset"][i]["value"],
-        floors: +dailyData["floors"]["activities-log-floors-intraday"]["dataset"][i]["value"],
-        steps: +dailyData["steps"]["activities-log-steps-intraday"]["dataset"][i]["value"],
-      });
-      timestamp += 60 * 1000;
-    }
-    return dailyTimeSeries;
+    return dailyData.ts.map(function(data) {
+      var elem = {
+        activeScore: dailyData.summary.activeScore,
+        awakeningsCount: dailyData.summary.awakeningsCount,
+        minutesToFallAsleep: dailyData.summary.minutesToFallAsleep,
+        timeInBed: dailyData.summary.timeInBed,
+        totalCalories: dailyData.summary.totalCalories,
+        totalFloors: dailyData.summary.totalFloors,
+        totalSteps: dailyData.summary.totalSteps,
+      };
+      for (var i = 0; i < data.length; i++) {
+        elem[dailyData.ts_columns[i]] = data[i];
+      }
+      return elem;
+    });
   });
   timeSeries = [].concat.apply([], timeSeries);
+  console.log(timeSeries.length);
 
   // crossfilter dimensions and groups
   var fitbit = crossfilter(timeSeries);
@@ -62,6 +31,18 @@ d3.json("/get-user-data", function(json) {
     return dDate.getHours() + dDate.getMinutes() / 60;
   });
   var hourGrp = hourDim.group(Math.floor);
+  var stepsDim = fitbit.dimension(function(d) {
+    return Math.min(200, d.steps);
+  });
+  var stepsGrp = stepsDim.group(function(d) {
+    return Math.floor(d / 5) * 5;
+  });
+  var timeInBedDim = fitbit.dimension(function(d) {
+    return d.timeInBed / 60;
+  });
+  var timeInBedGrp = timeInBedDim.group(function(d) {
+    return Math.floor(d);
+  });
 
   var today = new Date();
   var endDate = new Date(
@@ -70,8 +51,6 @@ d3.json("/get-user-data", function(json) {
       today.getDate(),
       0, 0, 0);
   var startDate = new Date(+endDate - 90 * 24 * 60 * 60 * 1000);
-  console.log(endDate);
-  console.log(startDate);
 
   var charts = [
     barChart()
@@ -83,6 +62,18 @@ d3.json("/get-user-data", function(json) {
     barChart()
         .dimension(hourDim)
         .group(hourGrp)
+      .x(d3.scale.linear()
+        .domain([0, 24])
+        .rangeRound([0, 10 * 24])),
+    barChart()
+        .dimension(stepsDim)
+        .group(stepsGrp)
+      .x(d3.scale.linear()
+        .domain([0, 200])
+        .rangeRound([0, 10 * 41])),
+    barChart()
+        .dimension(timeInBedDim)
+        .group(timeInBedGrp)
       .x(d3.scale.linear()
         .domain([0, 24])
         .rangeRound([0, 10 * 24]))

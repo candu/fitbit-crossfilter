@@ -66,6 +66,7 @@ class Fitbit(object):
 
     @classmethod
     def get_user_data_by_date(cls, access_token, date):
+        print 'loading date {0}'.format(date)
         date = date.strftime('%Y-%m-%d')
         user_data = {}
         # activities intraday and summary data
@@ -73,35 +74,31 @@ class Fitbit(object):
             'calories',
             'steps',
             'floors',
-            'elevation',
         ]
         for log_type in intraday_log_types:
             url = '/1/user/-/activities/log/{0}/date/{1}/1d.json'.format(
                     log_type, date)
+            print 'requesting {0}'.format(url)
             user_data[log_type] = json.loads(cls.request(access_token, url))
         # other activity summary data
         daily_log_types = [
-            'minutesSedentary',
-            'minutesLightlyActive',
-            'minutesFairlyActive',
-            'minutesVeryActive',
             'activeScore',
         ]
         for log_type in daily_log_types:
             url = '/1/user/-/activities/{0}/date/{1}/1d.json'.format(
                     log_type, date)
+            print 'requesting {0}'.format(url)
             user_data[log_type] = json.loads(cls.request(access_token, url))
         # sleep summary data
         sleep_log_types = [
-            'startTime',
-            'timeInBed',
             'awakeningsCount',
             'minutesToFallAsleep',
-            'efficiency',
+            'timeInBed',
         ]
         for log_type in sleep_log_types:
             url = '/1/user/-/sleep/{0}/date/{1}/1d.json'.format(
                     log_type, date)
+            print 'requesting {0}'.format(url)
             user_data[log_type] = json.loads(cls.request(access_token, url))
         return user_data
 

@@ -9,6 +9,7 @@ class :ui:page(:x:element):
         head = \
         <head>
             <title>{title}</title>
+            <link href='http://fonts.googleapis.com/css?family=Oxygen' rel='stylesheet' type='text/css' />
             <ui:css path="base.css" />
             <ui:js path="crossfilter.js" />
             <ui:js path="d3.js" />
