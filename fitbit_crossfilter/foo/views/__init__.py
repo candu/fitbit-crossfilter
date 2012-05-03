@@ -25,10 +25,10 @@ def index(request):
     <ui:page>
         <h1 id="banner">Fitbit + Crossfilter</h1>
         <p>
-        This dashboard uses
-        <a href="http://http://square.github.com/crossfilter/">Crossfilter</a>
-        and the
+        This dashboard uses the
         <a href="http://dev.fitbit.com/">Fitbit API</a>
+        with
+        <a href="http://http://square.github.com/crossfilter/">Crossfilter</a>
         to display your Fitbit data over the last 90 days.
         </p>
         <div id="charts">
