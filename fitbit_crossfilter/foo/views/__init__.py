@@ -46,7 +46,7 @@ def index(request):
             </div>
         </div>
     </ui:page>
-    return HttpResponse(page)
+    return HttpResponse(unicode(page))
 
 def get_user_data(request):
     if request.session.get('access_token') is None:

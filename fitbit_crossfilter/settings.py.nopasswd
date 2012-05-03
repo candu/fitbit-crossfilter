@@ -80,6 +80,7 @@ SECRET_KEY = '#3q_x0i#3eu=wvn7!+0@=!e-=eme8d+vii2jeybcol@y%g%-xt'
 TEMPLATE_LOADERS = ()
 
 MIDDLEWARE_CLASSES = (
+    'django.middleware.gzip.GZipMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
