@@ -30,6 +30,10 @@ html, body {
     color: #888;
 }
 
+#links {
+  font-size: 80%;
+}
+
 a {
   padding: 0 4px;
 }
@@ -44,15 +48,39 @@ a {
 }
 
 #date-chart {
-  width: 920px;
+  width: 620px;
 }
 
-#hour-chart, #timeinbed-chart {
+#hour-chart {
   width: 260px;
 }
 
 #steps-chart {
   width: 430px;
+}
+
+#calories-chart {
+  width: 280px;
+}
+
+#floors-chart {
+  width: 130px;
+}
+
+#activescore-chart {
+  width: 280px;
+}
+
+#awakeningscount-chart {
+  width: 180px;
+}
+
+#minutestofallasleep-chart {
+  width: 230px;
+}
+
+#timeinbed-chart {
+  width: 260px;
 }
 
 .chart {

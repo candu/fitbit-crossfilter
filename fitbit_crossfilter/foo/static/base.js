@@ -7,9 +7,6 @@ d3.json("/get-user-data", function(json) {
         awakeningsCount: dailyData.summary.awakeningsCount,
         minutesToFallAsleep: dailyData.summary.minutesToFallAsleep,
         timeInBed: dailyData.summary.timeInBed,
-        totalCalories: dailyData.summary.totalCalories,
-        totalFloors: dailyData.summary.totalFloors,
-        totalSteps: dailyData.summary.totalSteps,
       };
       for (var i = 0; i < data.length; i++) {
         elem[dailyData.ts_columns[i]] = data[i];
@@ -37,6 +34,36 @@ d3.json("/get-user-data", function(json) {
   var stepsGrp = stepsDim.group(function(d) {
     return Math.floor(d / 5) * 5;
   });
+  var caloriesDim = fitbit.dimension(function(d) {
+    return Math.min(25, d.calories);
+  });
+  var caloriesGrp = caloriesDim.group(function(d) {
+    return Math.floor(d);
+  });
+  var floorsDim = fitbit.dimension(function(d) {
+    return Math.min(10, d.floors);
+  });
+  var floorsGrp = floorsDim.group(function(d) {
+    return d;
+  });
+  var activeScoreDim = fitbit.dimension(function(d) {
+    return Math.min(2500, d.activeScore) / 1000;
+  });
+  var activeScoreGrp = activeScoreDim.group(function(d) {
+    return Math.floor(d / 0.1) * 0.1;
+  });
+  var awakeningsCountDim = fitbit.dimension(function(d) {
+    return Math.min(15, d.awakeningsCount);
+  });
+  var awakeningsCountGrp = awakeningsCountDim.group(function(d) {
+    return d;
+  });
+  var minutesToFallAsleepDim = fitbit.dimension(function(d) {
+    return Math.min(60, d.minutesToFallAsleep);
+  });
+  var minutesToFallAsleepGrp = minutesToFallAsleepDim.group(function(d) {
+    return Math.floor(d / 3) * 3;
+  });
   var timeInBedDim = fitbit.dimension(function(d) {
     return d.timeInBed / 60;
   });
@@ -50,7 +77,7 @@ d3.json("/get-user-data", function(json) {
       today.getMonth(),
       today.getDate(),
       0, 0, 0);
-  var startDate = new Date(+endDate - 90 * 24 * 60 * 60 * 1000);
+  var startDate = new Date(+endDate - 60 * 24 * 60 * 60 * 1000);
 
   var charts = [
     barChart()
@@ -58,7 +85,7 @@ d3.json("/get-user-data", function(json) {
         .group(dateGrp)
       .x(d3.time.scale()
         .domain([startDate, endDate])
-        .rangeRound([0, 10 * 90])),
+        .rangeRound([0, 10 * 60])),
     barChart()
         .dimension(hourDim)
         .group(hourGrp)
@@ -71,6 +98,36 @@ d3.json("/get-user-data", function(json) {
       .x(d3.scale.linear()
         .domain([0, 200])
         .rangeRound([0, 10 * 41])),
+    barChart()
+        .dimension(caloriesDim)
+        .group(caloriesGrp)
+      .x(d3.scale.linear()
+        .domain([0, 25])
+        .rangeRound([0, 10 * 26])),
+    barChart()
+        .dimension(floorsDim)
+        .group(floorsGrp)
+      .x(d3.scale.linear()
+        .domain([0, 10])
+        .rangeRound([0, 10 * 11])),
+    barChart()
+        .dimension(activeScoreDim)
+        .group(activeScoreGrp)
+      .x(d3.scale.linear()
+        .domain([0, 2.5])
+        .rangeRound([0, 10 * 26])),
+    barChart()
+        .dimension(awakeningsCountDim)
+        .group(awakeningsCountGrp)
+      .x(d3.scale.linear()
+        .domain([0, 15])
+        .rangeRound([0, 10 * 16])),
+    barChart()
+        .dimension(minutesToFallAsleepDim)
+        .group(minutesToFallAsleepGrp)
+      .x(d3.scale.linear()
+        .domain([0, 60])
+        .rangeRound([0, 10 * 21])),
     barChart()
         .dimension(timeInBedDim)
         .group(timeInBedGrp)

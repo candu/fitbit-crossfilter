@@ -32,9 +32,9 @@ def index(request):
         <a href="http://dev.fitbit.com/">Fitbit API</a>
         with
         <a href="http://http://square.github.com/crossfilter/">Crossfilter</a>
-        to display your Fitbit data over the last 90 days.
+        to display your Fitbit data over the last 60 days.
         </p>
-        <p>
+        <p id="links">
             <a href="javascript:resetAll()">reset all</a>
         </p>
         <div id="charts">
@@ -45,10 +45,25 @@ def index(request):
                 <div class="title">Time of Day</div>
             </div>
             <div id="steps-chart" class="chart">
-                <div class="title">Steps</div>
+                <div class="title">steps / min</div>
+            </div>
+            <div id="calories-chart" class="chart">
+                <div class="title">kcal / min</div>
+            </div>
+            <div id="floors-chart" class="chart">
+                <div class="title">floors / min</div>
+            </div>
+            <div id="activescore-chart" class="chart">
+                <div class="title">Active Score (x1000)</div>
+            </div>
+            <div id="awakeningscount-chart" class="chart">
+                <div class="title">Times Awoken</div>
+            </div>
+            <div id="minutestofallasleep-chart" class="chart">
+                <div class="title">Time to Asleep (min)</div>
             </div>
             <div id="timeinbed-chart" class="chart">
-                <div class="title">Time in Bed</div>
+                <div class="title">Sleep (h)</div>
             </div>
         </div>
         </div>
@@ -63,9 +78,9 @@ def get_user_data(request):
         return redirect('/login')
     access_token = oauth2.Token.from_string(request.session['access_token'])
     user_id = request.session['user_id']
-    three_months_ago = datetime.date.today() - datetime.timedelta(days=90)
+    two_months_ago = datetime.date.today() - datetime.timedelta(days=60)
     query = UserData.objects.filter(
-            user_id=user_id, date__gte=three_months_ago)
+            user_id=user_id, date__gte=two_months_ago)
     data = list(json.loads(row.data) for row in query)
     return HttpResponse(json.dumps(data),
                         content_type='application/json')
