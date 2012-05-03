@@ -1,3 +1,4 @@
+var loadStart = +new Date();
 d3.json("/get-user-data", function(json) {
   var timeSeries = json.map(function(dailyData) {
     return dailyData.ts.map(function(data) {
@@ -17,7 +18,6 @@ d3.json("/get-user-data", function(json) {
     });
   });
   timeSeries = [].concat.apply([], timeSeries);
-  console.log(timeSeries.length);
 
   // crossfilter dimensions and groups
   var fitbit = crossfilter(timeSeries);
@@ -86,6 +86,8 @@ d3.json("/get-user-data", function(json) {
     });
 
   renderAll();
+  var loadTime = +new Date() - loadStart;
+  d3.select("#footer").text("Page loaded in " + loadTime + " ms");
 
   function render(method) {
     d3.select(this).call(method);
@@ -105,6 +107,13 @@ d3.json("/get-user-data", function(json) {
     charts[i].filter(null);
     renderAll();
   };
+
+  window.resetAll = function() {
+    for (var i = 0; i < charts.length; i++) {
+        charts[i].filter(null);
+    }
+    renderAll();
+  }
 
   // from crossfilter demo at http://square.github.com/crossfilter/
   function barChart() {

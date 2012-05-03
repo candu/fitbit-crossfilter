@@ -1,18 +1,33 @@
-body {
+html, body {
   font-family: "Oxygen", "Helvetica Neue", sans-serif;
   font-size: 14pt;
   color: #222;
   background-color: #f7f7f7;
-  margin: 40px auto;
+  margin: 0 auto;
   width: 960px;
+  height: 100%;
 }
 
 #container {
+    min-height: 100%;
     position: relative;
 }
 
 #banner {
     color: #c33;
+}
+
+#body {
+    padding-bottom: 60px;
+}
+
+#footer {
+    position: absolute;
+    bottom: 0;
+    height: 60px;
+    width: 100%;
+    font-size: 70%;
+    color: #888;
 }
 
 a {

@@ -23,13 +23,19 @@ def index(request):
     access_token = oauth2.Token.from_string(request.session['access_token'])
     page = \
     <ui:page>
-        <h1 id="banner">Fitbit + Crossfilter</h1>
+        <div id="header">
+            <h1 id="banner">Fitbit + Crossfilter</h1>
+        </div>
+        <div id="body">
         <p>
         This dashboard uses the
         <a href="http://dev.fitbit.com/">Fitbit API</a>
         with
         <a href="http://http://square.github.com/crossfilter/">Crossfilter</a>
         to display your Fitbit data over the last 90 days.
+        </p>
+        <p>
+            <a href="javascript:resetAll()">reset all</a>
         </p>
         <div id="charts">
             <div id="date-chart" class="chart">
@@ -44,6 +50,10 @@ def index(request):
             <div id="timeinbed-chart" class="chart">
                 <div class="title">Time in Bed</div>
             </div>
+        </div>
+        </div>
+        <div id="footer">
+            Page loading...
         </div>
     </ui:page>
     return HttpResponse(unicode(page))
