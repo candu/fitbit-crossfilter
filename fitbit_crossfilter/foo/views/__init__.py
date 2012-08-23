@@ -156,8 +156,7 @@ def sync_user_data(request):
                              data=json.dumps(time_series))
         user_data.save()
         next_date += datetime.timedelta(days=1)
-    return HttpResponse(json.dumps({'status': 'ok'}),
-                        content_type='application/json')
+    return redirect('/')
 
 def login(request):
     if request.session.get('access_token') is not None:
