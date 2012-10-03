@@ -1,5 +1,7 @@
 # Django settings for fitbit_crossfilter project.
 
+import os.path
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -12,7 +14,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '/Users/evanstratford/git/fitbit-crossfilter/fitbit_crossfilter/foo.sql3',
+        'NAME': os.path.join(os.path.dirname(__file__), 'foo.sql3'),
     }
 }
 

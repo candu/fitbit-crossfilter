@@ -16,6 +16,19 @@ d3.json("/get-user-data", function(json) {
   });
   timeSeries = [].concat.apply([], timeSeries);
 
+  var startTime = new Date(timeSeries[0].timestamp);
+  var endTime = new Date(timeSeries[timeSeries.length - 1].timestamp);
+  var startDate = new Date(
+    startTime.getFullYear(),
+    startTime.getMonth(),
+    startTime.getDate(),
+    0, 0, 0);
+  var endDate = new Date(
+    endTime.getFullYear(),
+    endTime.getMonth(),
+    endTime.getDate(),
+    0, 0, 0);
+
   // crossfilter dimensions and groups
   var fitbit = crossfilter(timeSeries);
   var allGrp = fitbit.groupAll();
@@ -70,14 +83,6 @@ d3.json("/get-user-data", function(json) {
   var timeInBedGrp = timeInBedDim.group(function(d) {
     return Math.floor(d);
   });
-
-  var today = new Date();
-  var endDate = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate(),
-      0, 0, 0);
-  var startDate = new Date(+endDate - 60 * 24 * 60 * 60 * 1000);
 
   var charts = [
     barChart()

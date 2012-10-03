@@ -32,7 +32,7 @@ def index(request):
         <a href="http://dev.fitbit.com/">Fitbit API</a>
         with
         <a href="http://http://square.github.com/crossfilter/">Crossfilter</a>
-        to display your Fitbit data over the last 60 days.
+        to display your Fitbit data.
         </p>
         <p id="links">
             <a href="javascript:resetAll()">reset all</a>
@@ -78,9 +78,7 @@ def get_user_data(request):
         return redirect('/login')
     access_token = oauth2.Token.from_string(request.session['access_token'])
     user_id = request.session['user_id']
-    two_months_ago = datetime.date.today() - datetime.timedelta(days=60)
-    query = UserData.objects.filter(
-            user_id=user_id, date__gte=two_months_ago)
+    query = UserData.objects.all()
     data = list(json.loads(row.data) for row in query)
     return HttpResponse(json.dumps(data),
                         content_type='application/json')
