@@ -136,6 +136,8 @@ def _get_time_series_for_user_data(data):
 def sync_user_data(request):
     if request.session.get('access_token') is None:
         return redirect('/login')
+    if not settings.SYNC_ENABLED:
+        return redirect('/')
     access_token = oauth2.Token.from_string(request.session['access_token'])
     user_id = request.session['user_id']
     dates = list(UserData.objects.filter(user_id=user_id).values('date'))
