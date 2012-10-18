@@ -18,9 +18,8 @@ MS_PER_S = 1000
 S_PER_MIN = 60
 
 def index(request):
-    if request.session.get('access_token') is None:
+    if request.session.get('access_token') is None and settings.DEFAULT_USER is None:
         return redirect('/login')
-    access_token = oauth2.Token.from_string(request.session['access_token'])
     page = \
     <ui:page>
         <div id="header">
@@ -74,11 +73,16 @@ def index(request):
     return HttpResponse(unicode(page))
 
 def get_user_data(request):
-    if request.session.get('access_token') is None:
+    access_token = request.session.get('access_token')
+    if access_token is None and settings.DEFAULT_USER is None:
         return redirect('/login')
-    access_token = oauth2.Token.from_string(request.session['access_token'])
-    user_id = request.session['user_id']
-    query = UserData.objects.all()
+    if access_token is None:
+        user_id = settings.DEFAULT_USER
+    else:
+        access_token = oauth2.Token.from_string(access_token)
+        user_id = request.session['user_id']
+    print user_id
+    query = UserData.objects.filter(user_id=user_id)
     data = list(json.loads(row.data) for row in query)
     return HttpResponse(json.dumps(data),
                         content_type='application/json')
@@ -169,7 +173,9 @@ def logout(request):
     if request.session.get('access_token') is not None:
         del request.session['token']
         del request.session['access_token']
-    return redirect('/login')
+    if settings.DEFAULT_USER is None:
+      return redirect('/login')
+    return redirect('/')
 
 def oauth(request):
     if request.session.get('token') is None:
